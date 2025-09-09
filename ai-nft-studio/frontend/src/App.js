@@ -14,13 +14,14 @@ import {
   Alert,
   Snackbar
 } from '@mui/material';
-import { AutoAwesome, Collections, Work, Settings } from '@mui/icons-material';
+import { AutoAwesome, Collections, Work, Settings, Build } from '@mui/icons-material';
 
 // Components
 import AIIdeation from './components/AIIdeation';
 import CollectionForm from './components/CollectionForm';
 import JobManager from './components/JobManager';
 import CollectionList from './components/CollectionList';
+import UtilitiesPage from './components/UtilitiesPage';
 
 // Create theme
 const theme = createTheme({
@@ -167,6 +168,12 @@ function App() {
               id="tab-3"
               aria-controls="tabpanel-3"
             />
+            <Tab
+              icon={<Build />}
+              label="Utilities"
+              id="tab-4"
+              aria-controls="tabpanel-4"
+            />
           </Tabs>
         </Paper>
 
@@ -201,6 +208,13 @@ function App() {
           <TabPanel value={currentTab} index={3}>
             <CollectionList
               onCollectionSelected={handleCollectionSelected}
+              showNotification={showNotification}
+            />
+          </TabPanel>
+
+          {/* Utilities Tab */}
+          <TabPanel value={currentTab} index={4}>
+            <UtilitiesPage
               showNotification={showNotification}
             />
           </TabPanel>

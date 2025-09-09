@@ -136,8 +136,9 @@ const CollectionList = ({ onCollectionSelected, showNotification }) => {
 
   const calculateProgress = (collection) => {
     if (!collection.job_stats) return 0;
-    const { approved = 0, total = 0 } = collection.job_stats;
-    return total > 0 ? (approved / collection.collection_number) * 100 : 0;
+    const { total_jobs, approved_jobs } = collection.job_stats;
+    if (!total_jobs || total_jobs === 0) return 0;
+    return Math.round((approved_jobs / total_jobs) * 100);
   };
 
   if (isLoading) {
@@ -208,7 +209,7 @@ const CollectionList = ({ onCollectionSelected, showNotification }) => {
                   {collection.job_stats && (
                     <Box sx={{ mb: 2 }}>
                       <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                        Progress: {collection.job_stats.approved || 0} / {collection.collection_number} approved
+                        Progress: {collection.job_stats.approved_jobs || 0} / {collection.collection_number} approved
                       </Typography>
                       <LinearProgress
                         variant="determinate"
@@ -375,7 +376,7 @@ const CollectionList = ({ onCollectionSelected, showNotification }) => {
                     <Grid item xs={6} sm={3}>
                       <Paper sx={{ p: 2, textAlign: 'center' }}>
                         <Typography variant="h4" color="primary">
-                          {selectedCollection.job_stats.total || 0}
+                          {selectedCollection.job_stats.total_jobs || 0}
                         </Typography>
                         <Typography variant="body2">Total</Typography>
                       </Paper>
@@ -383,7 +384,7 @@ const CollectionList = ({ onCollectionSelected, showNotification }) => {
                     <Grid item xs={6} sm={3}>
                       <Paper sx={{ p: 2, textAlign: 'center' }}>
                         <Typography variant="h4" color="warning.main">
-                          {selectedCollection.job_stats.processing || 0}
+                          {selectedCollection.job_stats.pending_jobs || 0}
                         </Typography>
                         <Typography variant="body2">Processing</Typography>
                       </Paper>
@@ -391,7 +392,7 @@ const CollectionList = ({ onCollectionSelected, showNotification }) => {
                     <Grid item xs={6} sm={3}>
                       <Paper sx={{ p: 2, textAlign: 'center' }}>
                         <Typography variant="h4" color="success.main">
-                          {selectedCollection.job_stats.completed || 0}
+                          {selectedCollection.job_stats.generated_jobs || 0}
                         </Typography>
                         <Typography variant="body2">Completed</Typography>
                       </Paper>
@@ -399,7 +400,7 @@ const CollectionList = ({ onCollectionSelected, showNotification }) => {
                     <Grid item xs={6} sm={3}>
                       <Paper sx={{ p: 2, textAlign: 'center' }}>
                         <Typography variant="h4" color="primary.main">
-                          {selectedCollection.job_stats.approved || 0}
+                          {selectedCollection.job_stats.approved_jobs || 0}
                         </Typography>
                         <Typography variant="body2">Approved</Typography>
                       </Paper>

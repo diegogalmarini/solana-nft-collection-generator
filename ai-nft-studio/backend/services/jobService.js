@@ -18,15 +18,47 @@ class JobService {
    * @param {string} collectionId - Collection ID
    * @param {number} totalSupply - Total number of NFTs
    * @param {string} aiPrompt - AI prompt for generation
+   * @param {object} advancedParams - Advanced AI parameters
    * @returns {Promise<Array>} Created jobs
    */
-  async createJobsForCollection(collectionId, totalSupply, aiPrompt) {
+  async createJobsForCollection(collectionId, totalSupply, aiPrompt, advancedParams = {}) {
     try {
       console.log(`📋 Creating ${totalSupply} jobs for collection ${collectionId}`);
-      const jobs = await Job.createBatch(collectionId, totalSupply, aiPrompt);
+      const jobs = await Job.createBatch(collectionId, totalSupply, aiPrompt, advancedParams);
       return jobs;
     } catch (error) {
       console.error('❌ Error creating jobs:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Create initial batch of jobs and start processing
+   * @param {string} collectionId - Collection ID
+   * @param {object} advancedParams - Advanced AI parameters
+   * @returns {Promise<Array>} Created jobs
+   */
+  async createInitialBatch(collectionId, advancedParams = {}) {
+    try {
+      const collection = await Collection.findById(collectionId);
+      if (!collection) {
+        throw new Error('Collection not found');
+      }
+
+      // Create jobs for the collection
+      const jobs = await this.createJobsForCollection(
+        collectionId, 
+        collection.total_supply, 
+        collection.art_prompt,
+        advancedParams
+      );
+
+      // Start processing initial batch
+      await this.processInitialBatch(collectionId);
+      
+      return jobs;
+    } catch (error) {
+      console.error('❌ Error creating initial batch:', error);
       throw error;
     }
   }
@@ -135,8 +167,15 @@ class JobService {
       // Update status to generating
       await Job.updateStatus(job.id, 'generating');
 
-      // Generate image
-      const imagePath = await aiService.generateImage(job.ai_prompt, job.id);
+      // Prepare advanced parameters
+      const advancedParams = {
+        style_preset: job.style_preset,
+        negative_prompt: job.negative_prompt,
+        seed: job.seed
+      };
+
+      // Generate image with advanced parameters
+      const imagePath = await aiService.generateImage(job.ai_prompt, job.id, advancedParams);
       
       // Update job with image path
       await Job.updateStatus(job.id, 'generated', {

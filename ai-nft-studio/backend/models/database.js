@@ -64,6 +64,9 @@ class Database {
             image_path TEXT,
             metadata_path TEXT,
             ai_prompt TEXT,
+            style_preset TEXT,
+            negative_prompt TEXT,
+            seed INTEGER,
             error_message TEXT,
             retry_count INTEGER DEFAULT 0,
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -71,6 +74,25 @@ class Database {
             FOREIGN KEY (collection_id) REFERENCES collections (id)
           )
         `);
+
+        // Add new columns for advanced AI parameters if they don't exist
+        this.db.run(`ALTER TABLE jobs ADD COLUMN style_preset TEXT`, (err) => {
+          if (err && !err.message.includes('duplicate column')) {
+            console.error('Error adding style_preset column:', err.message);
+          }
+        });
+        
+        this.db.run(`ALTER TABLE jobs ADD COLUMN negative_prompt TEXT`, (err) => {
+          if (err && !err.message.includes('duplicate column')) {
+            console.error('Error adding negative_prompt column:', err.message);
+          }
+        });
+        
+        this.db.run(`ALTER TABLE jobs ADD COLUMN seed INTEGER`, (err) => {
+          if (err && !err.message.includes('duplicate column')) {
+            console.error('Error adding seed column:', err.message);
+          }
+        });
 
         // Create indexes for better performance
         this.db.run('CREATE INDEX IF NOT EXISTS idx_jobs_collection_id ON jobs(collection_id)');

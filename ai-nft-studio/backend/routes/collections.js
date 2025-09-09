@@ -79,7 +79,7 @@ router.get('/', async (req, res) => {
         const stats = await Collection.getJobStats(collection.id);
         return {
           ...collection,
-          stats
+          job_stats: stats
         };
       })
     );
@@ -202,6 +202,7 @@ router.delete('/:id', async (req, res) => {
 router.post('/:id/generate-initial', async (req, res) => {
   try {
     const { id } = req.params;
+    const { style_preset, negative_prompt, seed } = req.body;
     
     const collection = await Collection.findById(id);
     if (!collection) {
@@ -221,8 +222,15 @@ router.post('/:id/generate-initial', async (req, res) => {
     // Update collection status
     await Collection.update(id, { status: 'generating_initial' });
 
+    // Prepare advanced parameters
+    const advancedParams = {
+      style_preset,
+      negative_prompt,
+      seed
+    };
+
     // Start initial batch generation
-    const jobs = await jobService.createInitialBatch(id);
+    const jobs = await jobService.createInitialBatch(id, advancedParams);
     
     res.json({
       success: true,

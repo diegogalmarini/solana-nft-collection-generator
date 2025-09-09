@@ -16,13 +16,15 @@ import {
   Alert,
   CircularProgress,
   Slider,
-  FormHelperText
+  FormHelperText,
+  Chip
 } from '@mui/material';
 import {
   Settings,
   Collections,
   Save,
-  AutoAwesome
+  AutoAwesome,
+  AttachMoney
 } from '@mui/icons-material';
 import axios from 'axios';
 
@@ -45,6 +47,24 @@ const CollectionForm = ({ generatedMetadata, onCollectionCreated, showNotificati
   
   const [isCreating, setIsCreating] = useState(false);
   const [errors, setErrors] = useState({});
+
+  // AI Cost estimation (approximate costs per image)
+  const AI_COST_PER_IMAGE = 0.05; // $0.05 per image
+  const calculateEstimatedCost = () => {
+    return (formData.collection_number * AI_COST_PER_IMAGE).toFixed(2);
+  };
+
+  const getEstimatedTime = () => {
+    const imagesPerMinute = 2; // Approximate generation speed
+    const totalMinutes = Math.ceil(formData.collection_number / imagesPerMinute);
+    if (totalMinutes < 60) {
+      return `${totalMinutes} minutes`;
+    } else {
+      const hours = Math.floor(totalMinutes / 60);
+      const minutes = totalMinutes % 60;
+      return `${hours}h ${minutes}m`;
+    }
+  };
 
   const styleOptions = [
     { value: 'realistic', label: 'Realistic' },
@@ -350,6 +370,64 @@ const CollectionForm = ({ generatedMetadata, onCollectionCreated, showNotificati
                 valueLabelDisplay="auto"
               />
               <FormHelperText>Images to generate per batch</FormHelperText>
+            </Grid>
+
+            <Divider sx={{ width: '100%', my: 2 }} />
+
+            {/* Cost Estimation */}
+            <Grid item xs={12}>
+              <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center' }}>
+                <AttachMoney sx={{ mr: 1 }} />
+                Cost Estimation
+              </Typography>
+            </Grid>
+            
+            <Grid item xs={12}>
+              <Card sx={{ bgcolor: 'background.paper', border: '1px solid', borderColor: 'divider' }}>
+                <CardContent>
+                  <Grid container spacing={2} alignItems="center">
+                    <Grid item xs={12} md={4}>
+                      <Box sx={{ textAlign: 'center' }}>
+                        <Typography variant="h4" color="primary.main" sx={{ fontWeight: 'bold' }}>
+                          ${calculateEstimatedCost()}
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary">
+                          Estimated AI Cost
+                        </Typography>
+                      </Box>
+                    </Grid>
+                    <Grid item xs={12} md={4}>
+                      <Box sx={{ textAlign: 'center' }}>
+                        <Typography variant="h4" color="secondary.main" sx={{ fontWeight: 'bold' }}>
+                          {getEstimatedTime()}
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary">
+                          Estimated Time
+                        </Typography>
+                      </Box>
+                    </Grid>
+                    <Grid item xs={12} md={4}>
+                      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                        <Chip 
+                          label={`${formData.collection_number} images`} 
+                          color="primary" 
+                          variant="outlined" 
+                          size="small"
+                        />
+                        <Chip 
+                          label={`$${AI_COST_PER_IMAGE} per image`} 
+                          color="secondary" 
+                          variant="outlined" 
+                          size="small"
+                        />
+                        <Typography variant="caption" color="text.secondary" sx={{ mt: 1 }}>
+                          * Costs are estimates and may vary
+                        </Typography>
+                      </Box>
+                    </Grid>
+                  </Grid>
+                </CardContent>
+              </Card>
             </Grid>
 
             <Divider sx={{ width: '100%', my: 2 }} />

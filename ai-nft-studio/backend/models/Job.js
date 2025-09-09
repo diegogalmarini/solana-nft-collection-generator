@@ -12,6 +12,9 @@ class Job {
     this.image_path = data.image_path;
     this.metadata_path = data.metadata_path;
     this.ai_prompt = data.ai_prompt;
+    this.style_preset = data.style_preset;
+    this.negative_prompt = data.negative_prompt;
+    this.seed = data.seed;
     this.error_message = data.error_message;
     this.retry_count = data.retry_count || 0;
     this.created_at = data.created_at;
@@ -26,8 +29,8 @@ class Job {
       const stmt = db.prepare(`
         INSERT INTO jobs (
           id, collection_id, edition_number, edition_in_drop, 
-          status, ai_prompt, retry_count
-        ) VALUES (?, ?, ?, ?, ?, ?, ?)
+          status, ai_prompt, style_preset, negative_prompt, seed, retry_count
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `);
 
       stmt.run([
@@ -37,6 +40,9 @@ class Job {
         job.edition_in_drop,
         job.status,
         job.ai_prompt,
+        job.style_preset,
+        job.negative_prompt,
+        job.seed,
         job.retry_count
       ], function(err) {
         if (err) {
@@ -51,9 +57,18 @@ class Job {
     });
   }
 
-  static async createBatch(collectionId, totalSupply, aiPrompt) {
+  /**
+   * Create multiple jobs for a collection
+   * @param {string} collectionId - Collection ID
+   * @param {number} totalSupply - Number of jobs to create
+   * @param {string} aiPrompt - AI prompt for generation
+   * @param {object} advancedParams - Advanced AI parameters
+   * @returns {Promise<Array>} Created jobs
+   */
+  static async createBatch(collectionId, totalSupply, aiPrompt, advancedParams = {}) {
     const jobs = [];
     const db = database.getDatabase();
+    const { style_preset, negative_prompt, seed } = advancedParams;
 
     return new Promise((resolve, reject) => {
       db.serialize(() => {
@@ -62,8 +77,8 @@ class Job {
         const stmt = db.prepare(`
           INSERT INTO jobs (
             id, collection_id, edition_number, edition_in_drop, 
-            status, ai_prompt
-          ) VALUES (?, ?, ?, ?, ?, ?)
+            status, ai_prompt, style_preset, negative_prompt, seed
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
         `);
 
         for (let i = 1; i <= totalSupply; i++) {
@@ -71,7 +86,10 @@ class Job {
             collection_id: collectionId,
             edition_number: i,
             edition_in_drop: i,
-            ai_prompt: aiPrompt
+            ai_prompt: aiPrompt,
+            style_preset: style_preset || null,
+            negative_prompt: negative_prompt || null,
+            seed: seed || null
           });
 
           stmt.run([
@@ -80,7 +98,10 @@ class Job {
             job.edition_number,
             job.edition_in_drop,
             job.status,
-            job.ai_prompt
+            job.ai_prompt,
+            job.style_preset,
+            job.negative_prompt,
+            job.seed
           ]);
 
           jobs.push(job);

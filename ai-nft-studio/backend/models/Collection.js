@@ -144,6 +144,10 @@ class Collection {
       });
     });
   }
+
+  static async getJobStats(id) {
+    return this.getStats(id);
+  }
 }
 
 module.exports = Collection;

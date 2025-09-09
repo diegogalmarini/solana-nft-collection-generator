@@ -122,27 +122,54 @@ class AIService {
    * Generate image using Stability AI
    * @param {string} prompt - The art prompt
    * @param {string} jobId - Job ID for file naming
+   * @param {object} advancedParams - Advanced AI parameters (optional)
+   * @param {string} advancedParams.style_preset - Style preset for the image
+   * @param {string} advancedParams.negative_prompt - What to avoid in the image
+   * @param {number} advancedParams.seed - Seed for reproducible results
    * @returns {Promise<string>} Path to generated image
    */
-  async generateImage(prompt, jobId) {
+  async generateImage(prompt, jobId, advancedParams = {}) {
     try {
       console.log(`🎨 Generating image for job ${jobId}...`);
       
+      // Build request body with advanced parameters
+      const requestBody = {
+        text_prompts: [
+          {
+            text: prompt,
+            weight: 1
+          }
+        ],
+        cfg_scale: 7,
+        height: this.imageHeight,
+        width: this.imageWidth,
+        samples: 1,
+        steps: 30
+      };
+
+      // Add negative prompt if provided
+      if (advancedParams.negative_prompt && advancedParams.negative_prompt.trim()) {
+        requestBody.text_prompts.push({
+          text: advancedParams.negative_prompt,
+          weight: -1
+        });
+      }
+
+      // Add style preset if provided
+      if (advancedParams.style_preset) {
+        requestBody.style_preset = advancedParams.style_preset;
+      }
+
+      // Add seed if provided
+      if (advancedParams.seed && !isNaN(advancedParams.seed)) {
+        requestBody.seed = parseInt(advancedParams.seed);
+      }
+
+      console.log('🎨 Request body with advanced params:', JSON.stringify(requestBody, null, 2));
+
       const response = await axios.post(
         'https://api.stability.ai/v1/generation/stable-diffusion-xl-1024-v1-0/text-to-image',
-        {
-          text_prompts: [
-            {
-              text: prompt,
-              weight: 1
-            }
-          ],
-          cfg_scale: 7,
-          height: this.imageHeight,
-          width: this.imageWidth,
-          samples: 1,
-          steps: 30
-        },
+        requestBody,
         {
           headers: {
             'Content-Type': 'application/json',
